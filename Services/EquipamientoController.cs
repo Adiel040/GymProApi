@@ -13,49 +13,48 @@ namespace GymProApi.Services
         public EquipamientoController(IConfiguration config) { this.config = config; }
 
         [HttpGet(Name = "GetEquipamientos")]
-        public async Task<ActionResult<List<Equipamiento>>> GetEquipamientos()
+        public async Task<ActionResult<List<Equipamientos>>> GetEquipamientos()
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
-            var equipamientos = await connection.QueryAsync<Equipamiento>("SELECT * FROM Equipamientos");
+            var equipamientos = await connection.QueryAsync<Equipamientos>("SELECT * FROM Equipamientos");
             return equipamientos.ToList();
         }
 
         [HttpGet("{id}", Name = "GetEquipamiento")]
-        public async Task<ActionResult<Equipamiento?>> GetEquipamientoById(int id)
+        public async Task<ActionResult<Equipamientos?>> GetEquipamientoById(int id)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
-            var equipamiento = await connection.QueryFirstOrDefaultAsync<Equipamiento>("SELECT * FROM Equipamientos WHERE EquipamientoId = @EquipamientoId", new { EquipamientoId = id });
+            var equipamiento = await connection.QueryFirstOrDefaultAsync<Equipamientos>("SELECT * FROM Equipamientos WHERE EquipoId = @EquipoId", new { EquipoId = id });
             if (equipamiento == null) return NotFound();
             return equipamiento;
         }
 
         [HttpPost(Name = "AddEquipamiento")]
-        public async Task<ActionResult<Equipamiento>> AddEquipamiento(Equipamiento equipamiento)
+        public async Task<ActionResult<Equipamientos>> AddEquipamiento(Equipamientos equipamiento)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var result = await connection.QueryFirstAsync<int>(
-                @"INSERT INTO Equipamientos (Nombre, Descripcion, FechaAdquisicion) 
-                OUTPUT INSERTED.EquipamientoId
-                VALUES (@Nombre, @Descripcion, @FechaAdquisicion);",
-                new { equipamiento.Nombre, equipamiento.Descripcion, equipamiento.FechaAdquisicion }
+                @"INSERT INTO Equipamientos (Nombre, Descripcion) 
+                OUTPUT INSERTED.EquipoId
+                VALUES (@Nombre, @Descripcion);",
+                new { equipamiento.Nombre, equipamiento.Descripcion }
             );
 
-            return CreatedAtRoute("GetEquipamiento", new { id = result }, new Equipamiento
+            return CreatedAtRoute("GetEquipamiento", new { id = result }, new Equipamientos
             {
-                EquipamientoId = result,
+                EquipoId = result,
                 Nombre = equipamiento.Nombre,
-                Descripcion = equipamiento.Descripcion,
-                FechaAdquisicion = equipamiento.FechaAdquisicion
+                Descripcion = equipamiento.Descripcion
             });
         }
 
         [HttpPut("{id}", Name = "UpdateEquipamiento")]
-        public async Task<IActionResult> UpdateEquipamiento(int id, Equipamiento equipamiento)
+        public async Task<IActionResult> UpdateEquipamiento(int id, Equipamientos equipamiento)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var result = await connection.ExecuteAsync(
-                "UPDATE Equipamientos SET Nombre = @Nombre, Descripcion = @Descripcion, FechaAdquisicion = @FechaAdquisicion WHERE EquipamientoId = @EquipamientoId",
-                new { equipamiento.Nombre, equipamiento.Descripcion, equipamiento.FechaAdquisicion, EquipamientoId = id }
+                "UPDATE Equipamientos SET Nombre = @Nombre, Descripcion = @Descripcion WHERE EquipoId = @EquipoId",
+                new { equipamiento.Nombre, equipamiento.Descripcion, EquipoId = id }
             );
             if (result == 0) return NotFound();
             return NoContent();
@@ -65,9 +64,11 @@ namespace GymProApi.Services
         public async Task<IActionResult> DeleteEquipamiento(int id)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
-            var result = await connection.ExecuteAsync("DELETE FROM Equipamientos WHERE EquipamientoId = @EquipamientoId", new { EquipamientoId = id });
+            var result = await connection.ExecuteAsync("DELETE FROM Equipamientos WHERE EquipoId = @EquipoId", new { EquipoId = id });
             if (result == 0) return NotFound();
             return NoContent();
         }
     }
 }
+
+

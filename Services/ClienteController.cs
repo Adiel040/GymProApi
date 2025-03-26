@@ -50,6 +50,7 @@ namespace GymProApi.Services
                 NoIdentificacion = cliente.NoIdentificacion
             });
         }
+        
 
         [HttpPut("{id}", Name = "UpdateCliente")]
         public async Task<IActionResult> UpdateCliente(int id, Clientes cliente)
@@ -63,14 +64,6 @@ namespace GymProApi.Services
             return NoContent();
         }
 
-        [HttpDelete("{id}", Name = "DeleteCliente")]
-        public async Task<IActionResult> DeleteCliente(int id)
-        {
-            using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
-            var result = await connection.ExecuteAsync("DELETE FROM Clientes WHERE ClienteId = @ClienteId", new { ClienteId = id });
-            if (result == 0) return NotFound();
-            return NoContent();
-        }
     }
 }
 

@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Constants.cs" />
+    <None Include="Utils\Constants.cs" />
   </ItemGroup>
 
 </Project>

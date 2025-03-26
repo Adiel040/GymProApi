@@ -60,14 +60,7 @@ namespace GymProApi.Services
             return NoContent();
         }
 
-        [HttpDelete("{id}", Name = "DeleteEquipamiento")]
-        public async Task<IActionResult> DeleteEquipamiento(int id)
-        {
-            using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
-            var result = await connection.ExecuteAsync("DELETE FROM Equipamientos WHERE EquipoId = @EquipoId", new { EquipoId = id });
-            if (result == 0) return NotFound();
-            return NoContent();
-        }
+     
     }
 }
 

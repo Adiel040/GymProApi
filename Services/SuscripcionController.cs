@@ -2,6 +2,8 @@ using Dapper;
 using GymProApi.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using static GymProApi.DTOs.CreatesDTOs;
+using static GymProApi.DTOs.EditsDTOs;
 
 namespace GymProApi.Services
 {
@@ -12,7 +14,7 @@ namespace GymProApi.Services
         private readonly IConfiguration config;
         public SuscripcionController(IConfiguration config) { this.config = config; }
 
-        [HttpGet(Name = "GetSuscripciones")]
+        [HttpGet("/GetSuscripciones")]
         public async Task<ActionResult<List<Suscripciones>>> GetSuscripciones()
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
@@ -20,48 +22,58 @@ namespace GymProApi.Services
             return suscripciones.ToList();
         }
 
-        [HttpGet("{id}", Name = "GetSuscripcion")]
+
+        [HttpGet("/GetSuscripcionById/{id}")]
         public async Task<ActionResult<Suscripciones?>> GetSuscripcionById(int id)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var suscripcion = await connection.QueryFirstOrDefaultAsync<Suscripciones>("SELECT * FROM Suscripciones WHERE SuscripcionId = @SuscripcionId", new { SuscripcionId = id });
-            if (suscripcion == null) return NotFound();
-            return suscripcion;
+            return suscripcion == null ? NotFound() : suscripcion;
         }
 
-        [HttpPost(Name = "AddSuscripcion")]
-        public async Task<ActionResult<Suscripciones>> AddSuscripcion(Suscripciones suscripcion)
+
+        [HttpPost("/AddSuscripcion")]
+        public async Task<ActionResult<Suscripciones>> AddSuscripcion(AddSuscripcionDto suscripcion)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var result = await connection.QueryFirstAsync<int>(
-                @"INSERT INTO Suscripciones (Nombre, Precio, ClientesSuscritos) 
+                @"INSERT INTO Suscripciones (Nombre, Descripcion, Precio, ClientesSuscritos) 
                 OUTPUT INSERTED.SuscripcionId
-                VALUES (@Nombre, @Precio, @ClientesSuscritos);",
-                new { suscripcion.Nombre, suscripcion.Precio, suscripcion.ClientesSuscritos }
+                VALUES (@Nombre, @Descripcion, @Precio, 0);",
+                new { suscripcion.Nombre, suscripcion.Descripcion, suscripcion.Precio }
             );
 
-            return CreatedAtRoute("GetSuscripcion", new { id = result }, new Suscripciones
+            return Ok(new Suscripciones
             {
                 SuscripcionId = result,
                 Nombre = suscripcion.Nombre,
+                Descripcion = suscripcion.Descripcion,
                 Precio = suscripcion.Precio,
-                ClientesSuscritos = suscripcion.ClientesSuscritos
+                ClientesSuscritos = 0
             });
         }
 
-        [HttpPut("{id}", Name = "UpdateSuscripcion")]
-        public async Task<IActionResult> UpdateSuscripcion(int id, Suscripciones suscripcion)
+
+        [HttpPut("/UpdateSuscripcion")]
+        public async Task<IActionResult> UpdateSuscripcion(UpdateSuscripcionDto suscripcion)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var result = await connection.ExecuteAsync(
-                "UPDATE Suscripciones SET Nombre = @Nombre, Precio = @Precio, ClientesSuscritos = @ClientesSuscritos WHERE SuscripcionId = @SuscripcionId",
-                new { suscripcion.Nombre, suscripcion.Precio, suscripcion.ClientesSuscritos, SuscripcionId = id }
+                "UPDATE Suscripciones SET Nombre = @Nombre, Precio = @Precio, Descripcion = @Descripcion WHERE SuscripcionId = @SuscripcionId",
+                new { suscripcion.Nombre, suscripcion.Precio,suscripcion.Descripcion, suscripcion.SuscripcionId }
             );
-            if (result == 0) return NotFound();
-            return NoContent();
+            return result == 0 ? NotFound() : NoContent();
         }
 
-     
+
+        [HttpDelete("/DeleteSuscripcion/{id}")]
+        public async Task<IActionResult> DeleteSuscripcion(int id)
+        {
+            using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
+            var result = await connection.ExecuteAsync("DELETE FROM Suscripciones WHERE SuscripcionId = @SuscripcionId", new { SuscripcionId = id });
+            await connection.ExecuteAsync("UPDATE Clientes SET SuscripcionId = NULL, EntrenadorId = NULL WHERE SuscripcionId = @SuscripcionId", new { SuscripcionId = id });
+            return result == 0 ? NotFound() : NoContent();
+        }
     }
 }
 

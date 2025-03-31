@@ -2,6 +2,7 @@ using Dapper;
 using GymProApi.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using static GymProApi.DTOs.EditsDTOs;
 
 namespace GymProApi.Services
 {
@@ -12,53 +13,31 @@ namespace GymProApi.Services
         private readonly IConfiguration config;
         public EntrenadorController(IConfiguration config) { this.config = config; }
 
-        [HttpGet(Name = "GetEntrenadores")]
+        [HttpGet("/GetEntrenadores")]
         public async Task<ActionResult<List<Entrenadores>>> GetEntrenadores()
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
-            var entrenadores = await connection.QueryAsync<Entrenadores>("SELECT * FROM Entrenadores");
+            var entrenadores = await connection.QueryAsync<Entrenadores>("SELECT E.*, U.username FROM Entrenadores E LEFT JOIN Usuarios U ON U.UserId = E.UserId;");
             return entrenadores.ToList();
         }
 
-        [HttpGet("{id}", Name = "GetEntrenador")]
+        [HttpGet("/GetEntrenadorById/{id}")]
         public async Task<ActionResult<Entrenadores?>> GetEntrenadorById(int id)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
-            var entrenador = await connection.QueryFirstOrDefaultAsync<Entrenadores>("SELECT * FROM Entrenadores WHERE EntrenadorId = @EntrenadorId", new { EntrenadorId = id });
-            if (entrenador == null) return NotFound();
-            return entrenador;
+            var entrenador = await connection.QueryFirstOrDefaultAsync<Entrenadores>("SELECT E.*, U.username FROM Entrenadores E LEFT JOIN Usuarios U ON U.UserId = E.UserId WHERE EntrenadorId = @EntrenadorId", new { EntrenadorId = id });
+            return entrenador is null ? NotFound() : entrenador;
         }
 
-        [HttpPost(Name = "AddEntrenador")]
-        public async Task<ActionResult<Entrenadores>> AddEntrenador(Entrenadores entrenador)
-        {
-            using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
-            var result = await connection.QueryFirstAsync<int>(
-                @"INSERT INTO Entrenadores (UserId, Rango, ClientesInscritos) 
-                OUTPUT INSERTED.EntrenadorId
-                VALUES (@UserId, @Rango, @ClientesInscritos);",
-                new { entrenador.UserId, entrenador.Rango, entrenador.ClientesInscritos }
-            );
-
-            return CreatedAtRoute("GetEntrenador", new { id = result }, new Entrenadores
-            {
-                EntrenadorId = result,
-                UserId = entrenador.UserId,
-                Rango = entrenador.Rango,
-                ClientesInscritos = entrenador.ClientesInscritos
-            });
-        }
-
-        [HttpPut("{id}", Name = "UpdateEntrenador")]
-        public async Task<IActionResult> UpdateEntrenador(int id, Entrenadores entrenador)
+        [HttpPut("/UpdateEntrenador")]
+        public async Task<IActionResult> UpdateEntrenador(UpdateEntrenadorDto entrenador)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var result = await connection.ExecuteAsync(
-                "UPDATE Entrenadores SET UserId = @UserId, Rango = @Rango, ClientesInscritos = @ClientesInscritos WHERE EntrenadorId = @EntrenadorId",
-                new { entrenador.UserId, entrenador.Rango, entrenador.ClientesInscritos, EntrenadorId = id }
+                "UPDATE Entrenadores SET Rango = @Rango WHERE EntrenadorId = @EntrenadorId",
+                new {  entrenador.Rango, entrenador.EntrenadorId }
             );
-            if (result == 0) return NotFound();
-            return NoContent();
+            return result == 0 ? NotFound() : NoContent();
         }
 
     }

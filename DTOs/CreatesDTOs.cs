@@ -2,30 +2,32 @@
 {
     public static class CreatesDTOs
     {
-        public record RegistUsuario(
+        public record NewUserDto(
             string Username,
             string Clave,
             string Rol,
 
-            string? CorreoElectronico,
             string? NoIdentificacion,
             DateOnly? FechaNacimiento,
 
             float? Peso,
             float? Altura,
             char? Genero,
+            int? SuscripcionId,
 
             string? Rango
         );
 
-        public record AddEquipamiento(
+        public record AddEquipamientoDto(
             string Nombre,
             string Descripcion
         );
-
-
-
-        public record AddProducto(
+        public record AddSuscripcionDto(
+            string Nombre,
+            string Descripcion,
+            float Precio
+        );
+        public record AddProductoDto(
             string Nombre,
             string Categoria,
             float Precio

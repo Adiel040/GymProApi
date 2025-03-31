@@ -2,6 +2,16 @@
 {
     public class EditsDTOs
     {
+        public record UpdatePesoDto(
+            int UserId,
+            float Peso
+        );
+        public record UpdateAlturaDto(
+            int UserId,
+            float Altura
+        );
+        
+
         public record ChangePasswordDto
         (
             string NewClave,
@@ -10,17 +20,26 @@
         
         public record ChangeEntrenadorDto(
             int UserId,
-            int EntrenadorId
+            int NewEntrenadorId,
+            int OldEntrenadorId
         );
 
         public record ChangeSuscripcionDto(
             int UserId,
-            int SuscripcionId
+            int NewSuscripcionId,
+            int OldSuscripcionId
         );
-        public record UpdateSuscripcion(
+        public record UpdateSuscripcionDto(
             int SuscripcionId,
             string Nombre,
+            string Descripcion,
             float Precio
         );
+
+        public record UpdateEntrenadorDto(
+            int EntrenadorId,
+            string Rango
+        );
+
     }
 }

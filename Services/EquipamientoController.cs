@@ -2,6 +2,7 @@ using Dapper;
 using GymProApi.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using static GymProApi.DTOs.CreatesDTOs;
 
 namespace GymProApi.Services
 {
@@ -12,7 +13,7 @@ namespace GymProApi.Services
         private readonly IConfiguration config;
         public EquipamientoController(IConfiguration config) { this.config = config; }
 
-        [HttpGet(Name = "GetEquipamientos")]
+        [HttpGet("/GetEquipamientos")]
         public async Task<ActionResult<List<Equipamientos>>> GetEquipamientos()
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
@@ -20,17 +21,18 @@ namespace GymProApi.Services
             return equipamientos.ToList();
         }
 
-        [HttpGet("{id}", Name = "GetEquipamiento")]
+
+        [HttpGet("/GetEquipamientoById/{id}")]
         public async Task<ActionResult<Equipamientos?>> GetEquipamientoById(int id)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var equipamiento = await connection.QueryFirstOrDefaultAsync<Equipamientos>("SELECT * FROM Equipamientos WHERE EquipoId = @EquipoId", new { EquipoId = id });
-            if (equipamiento == null) return NotFound();
-            return equipamiento;
+            return equipamiento is null ? NotFound() : equipamiento;
         }
 
-        [HttpPost(Name = "AddEquipamiento")]
-        public async Task<ActionResult<Equipamientos>> AddEquipamiento(Equipamientos equipamiento)
+
+        [HttpPost("/AddEquipamiento")]
+        public async Task<ActionResult<Equipamientos>> AddEquipamiento(AddEquipamientoDto equipamiento)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var result = await connection.QueryFirstAsync<int>(
@@ -40,7 +42,7 @@ namespace GymProApi.Services
                 new { equipamiento.Nombre, equipamiento.Descripcion }
             );
 
-            return CreatedAtRoute("GetEquipamiento", new { id = result }, new Equipamientos
+            return Ok(new Equipamientos
             {
                 EquipoId = result,
                 Nombre = equipamiento.Nombre,
@@ -48,19 +50,25 @@ namespace GymProApi.Services
             });
         }
 
-        [HttpPut("{id}", Name = "UpdateEquipamiento")]
-        public async Task<IActionResult> UpdateEquipamiento(int id, Equipamientos equipamiento)
+
+        [HttpPut("/UpdateEquipamiento")]
+        public async Task<IActionResult> UpdateEquipamiento(Equipamientos equipamiento)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var result = await connection.ExecuteAsync(
                 "UPDATE Equipamientos SET Nombre = @Nombre, Descripcion = @Descripcion WHERE EquipoId = @EquipoId",
-                new { equipamiento.Nombre, equipamiento.Descripcion, EquipoId = id }
+                new { equipamiento.Nombre, equipamiento.Descripcion, equipamiento.EquipoId }
             );
-            if (result == 0) return NotFound();
-            return NoContent();
+            return result == 0 ? NotFound() : NoContent();
         }
 
-     
+        [HttpDelete("/DeleteEquipamiento/{id}")]
+        public async Task<IActionResult> DeleteEquipamiento(int id)
+        {
+            using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
+            var result = await connection.ExecuteAsync("DELETE FROM Equipamientos WHERE EquipoId = @EquipoId", new { EquipoId = id });
+            return result == 0 ? NotFound() : NoContent();
+        }
     }
 }
 

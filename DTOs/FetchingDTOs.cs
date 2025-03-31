@@ -7,11 +7,12 @@
             string Username,
             string Clave,
             string Rol,
-            DateTime FechaCreacion,
+            string FechaCreacion,
 
             //Cliente Data
-            string? CorreoElectronico,
+            int? ClienteId,
             string? NoIdentificacion,
+            string? FechaNacimiento,
             float? Peso,
             float? Altura,
             char? Genero, 

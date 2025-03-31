@@ -1,6 +1,7 @@
 using Dapper;
 using GymProApi.Entities;
 using Microsoft.AspNetCore.Mvc;
+using static GymProApi.DTOs.CreatesDTOs;
 using Microsoft.Data.SqlClient;
 
 namespace GymProApi.Services
@@ -12,7 +13,7 @@ namespace GymProApi.Services
         private readonly IConfiguration config;
         public ProductoController(IConfiguration config) { this.config = config; }
 
-        [HttpGet(Name = "GetProductos")]
+        [HttpGet("/GetProductos")]
         public async Task<ActionResult<List<Productos>>> GetProductos()
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
@@ -20,7 +21,8 @@ namespace GymProApi.Services
             return productos.ToList();
         }
 
-        [HttpGet("{id}", Name = "GetProducto")]
+
+        [HttpGet("/GetProductoById/{id}")]
         public async Task<ActionResult<Productos?>> GetProductoById(int id)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
@@ -29,8 +31,9 @@ namespace GymProApi.Services
             return producto;
         }
 
-        [HttpPost(Name = "AddProducto")]
-        public async Task<ActionResult<Productos>> AddProducto(Productos producto)
+
+        [HttpPost("/AddProducto")]
+        public async Task<ActionResult<Productos>> AddProducto(AddProductoDto producto)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var result = await connection.QueryFirstAsync<int>(
@@ -40,7 +43,7 @@ namespace GymProApi.Services
                 new { producto.Nombre, producto.Categoria, producto.Precio }
             );
 
-            return CreatedAtRoute("GetProducto", new { id = result }, new Productos
+            return Ok(new Productos
             {
                 ProductoId = result,
                 Nombre = producto.Nombre,
@@ -49,18 +52,26 @@ namespace GymProApi.Services
             });
         }
 
-        [HttpPut("{id}", Name = "UpdateProducto")]
-        public async Task<IActionResult> UpdateProducto(int id, Productos producto)
+
+        [HttpPut("/UpdateProducto")]
+        public async Task<IActionResult> UpdateProducto(Productos producto)
         {
             using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
             var result = await connection.ExecuteAsync(
                 "UPDATE Productos SET Nombre = @Nombre, Categoria = @Categoria, Precio = @Precio WHERE ProductoId = @ProductoId",
-                new { producto.Nombre, producto.Categoria, producto.Precio, ProductoId = id }
+                new { producto.Nombre, producto.Categoria, producto.Precio,  producto.ProductoId }
             );
-            if (result == 0) return NotFound();
-            return NoContent();
+            return result == 0 ? NotFound() : NoContent();
         }
 
+
+        [HttpDelete("/DeleteProducto/{id}")]
+        public async Task<IActionResult> DeleteProducto(int id)
+        {
+            using var connection = new SqlConnection(config.GetConnectionString("Prueba"));
+            var result = await connection.ExecuteAsync("DELETE FROM Productos WHERE ProductoId = @ProductoId", new { ProductoId = id });
+            return result == 0 ? NotFound("No se encontro el producto con ID " + id) : NoContent();
+        }
     }
 }
 

@@ -432,10 +432,12 @@ namespace GymProApi.Services
                         await connection.ExecuteAsync("UPDATE Suscripciones SET ClientesSuscritos = ClientesSuscritos - 1 WHERE SuscripcionId = @SuscripcionId", new { cliente.SuscripcionId });
                         await connection.ExecuteAsync("UPDATE Entrenadores SET ClientesInscritos = ClientesInscritos - 1 WHERE EntrenadorId = @EntrenadorId", new { cliente.EntrenadorId });
                     }
+                    await connection.ExecuteAsync("DELETE FROM Clientes WHERE UserId = @UserId", new { UserId = id });
                 }
                 else if (usuario.Rol == ROLES.ENTRENADOR)
                 {
                     await connection.ExecuteAsync("UPDATE Clientes SET EntrenadorId = NULL WHERE EntrenadorId = @EntrenadorId", new { EntrenadorId = id });
+                    await connection.ExecuteAsync("DELETE FROM Entrenadores WHERE UserId = @UserId", new { UserId = id });
                 }
 
                 var result = await connection.ExecuteAsync("DELETE FROM Usuarios WHERE UserId = @UserId", new { UserId = id });

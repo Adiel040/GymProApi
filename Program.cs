@@ -12,6 +12,8 @@ if (app.Environment.IsDevelopment())
 {
 }
 
+app.UseCors(options => options.AllowAnyOrigin());
+
 app.UseSwagger();
 app.UseSwaggerUI();
 

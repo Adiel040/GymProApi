@@ -335,7 +335,7 @@ namespace GymProApi.Services
                 if (cliente is 0 or null) return BadRequest("El usuario no es cliente");
 
                 var changesMade = await connection.ExecuteAsync("UPDATE Clientes SET EntrenadorId = @EntrenadorId WHERE ClienteId = @ClienteId", new { EntrenadorId = dto.NewEntrenadorId, ClienteId = cliente });
-                changesMade += await connection.ExecuteAsync("UPDATE Entrenadores SET ClientesInscritos = ClientesInscritos + 1 WHERE EntrenadorId = @EntrenadorId", new { EntrenadorId = dto.NewEntrenadorId });
+                changesMade += (dto.NewEntrenadorId is 0) ? 1 : await connection.ExecuteAsync("UPDATE Entrenadores SET ClientesInscritos = ClientesInscritos + 1 WHERE EntrenadorId = @EntrenadorId", new { EntrenadorId = dto.NewEntrenadorId });
 
                 changesMade += (dto.OldEntrenadorId is 0) ? 1 : await connection.ExecuteAsync("UPDATE Entrenadores SET ClientesInscritos = ClientesInscritos - 1 WHERE EntrenadorId = @EntrenadorId", new { EntrenadorId = dto.OldEntrenadorId });
                 return Ok(changesMade is EXPECTED_CHANGES);
@@ -361,10 +361,8 @@ namespace GymProApi.Services
                 if (cliente is null or 0) return BadRequest("El usuario no es cliente");
 
                 var allChanges = await connection.ExecuteAsync("UPDATE Clientes SET SuscripcionId = @SuscripcionId WHERE ClienteId = @ClienteId", new { SuscripcionId = dto.NewSuscripcionId, ClienteId = cliente });
-                allChanges += await connection.ExecuteAsync("UPDATE Suscripciones SET ClientesSuscritos = ClientesSuscritos + 1 WHERE SuscripcionId = @SuscripcionId", new { SuscripcionId = dto.NewSuscripcionId });
-                allChanges += (dto.OldSuscripcionId is 0) ?
-                     1
-                    : await connection.ExecuteAsync("UPDATE Suscripciones SET ClientesSuscritos = ClientesSuscritos - 1 WHERE SuscripcionId = @SuscripcionId", new { SuscripcionId = dto.OldSuscripcionId });
+                allChanges += (dto.NewSuscripcionId is 0) ? 1 : await connection.ExecuteAsync("UPDATE Suscripciones SET ClientesSuscritos = ClientesSuscritos + 1 WHERE SuscripcionId = @SuscripcionId", new { SuscripcionId = dto.NewSuscripcionId });
+                allChanges += (dto.OldSuscripcionId is 0) ? 1 : await connection.ExecuteAsync("UPDATE Suscripciones SET ClientesSuscritos = ClientesSuscritos - 1 WHERE SuscripcionId = @SuscripcionId", new { SuscripcionId = dto.OldSuscripcionId });
 
                 return Ok(allChanges is EXPECTED_CHANGES);
             }
